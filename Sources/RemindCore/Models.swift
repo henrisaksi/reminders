@@ -113,17 +113,52 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
   }
 }
 
+public enum LocationProximity: String, Codable, CaseIterable, Sendable {
+  case arriving = "arriving"
+  case leaving = "leaving"
+}
+
+public struct LocationTrigger: Sendable {
+  public let address: String
+  public let latitude: Double?
+  public let longitude: Double?
+  public let radius: Double  // in meters
+  public let proximity: LocationProximity
+
+  public init(
+    address: String,
+    latitude: Double? = nil,
+    longitude: Double? = nil,
+    radius: Double = 100,
+    proximity: LocationProximity = .arriving
+  ) {
+    self.address = address
+    self.latitude = latitude
+    self.longitude = longitude
+    self.radius = radius
+    self.proximity = proximity
+  }
+}
+
 public struct ReminderDraft: Sendable {
   public let title: String
   public let notes: String?
   public let dueDate: Date?
   public let priority: ReminderPriority
+  public let location: LocationTrigger?
 
-  public init(title: String, notes: String?, dueDate: Date?, priority: ReminderPriority) {
+  public init(
+    title: String,
+    notes: String?,
+    dueDate: Date?,
+    priority: ReminderPriority,
+    location: LocationTrigger? = nil
+  ) {
     self.title = title
     self.notes = notes
     self.dueDate = dueDate
     self.priority = priority
+    self.location = location
   }
 }
 
