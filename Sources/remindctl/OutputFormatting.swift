@@ -51,7 +51,7 @@ enum OutputRenderer {
     switch format {
     case .standard:
       let due = reminder.dueDate.map { DateParsing.formatDisplay($0) } ?? "no due date"
-      Swift.print("✓ \(reminder.title) [\(reminder.listName)] — \(due)")
+      Swift.print("✓ \(reminder.title) [\(listDisplayName(for: reminder))] — \(due)")
     case .plain:
       Swift.print(plainLine(for: reminder))
     case .json:
@@ -98,7 +98,7 @@ enum OutputRenderer {
       let status = reminder.isCompleted ? "x" : " "
       let due = reminder.dueDate.map { DateParsing.formatDisplay($0) } ?? "no due date"
       let priority = reminder.priority == .none ? "" : " priority=\(reminder.priority.rawValue)"
-      Swift.print("[\(index + 1)] [\(status)] \(reminder.title) [\(reminder.listName)] — \(due)\(priority)")
+      Swift.print("[\(index + 1)] [\(status)] \(reminder.title) [\(listDisplayName(for: reminder))] — \(due)\(priority)")
     }
   }
 
@@ -113,12 +113,19 @@ enum OutputRenderer {
     let due = reminder.dueDate.map { isoFormatter().string(from: $0) } ?? ""
     return [
       reminder.id,
-      reminder.listName,
+      listDisplayName(for: reminder),
       reminder.isCompleted ? "1" : "0",
       reminder.priority.rawValue,
       due,
       reminder.title,
     ].joined(separator: "\t")
+  }
+
+  private static func listDisplayName(for reminder: ReminderItem) -> String {
+    guard let sectionName = reminder.sectionName, !sectionName.isEmpty else {
+      return reminder.listName
+    }
+    return "\(reminder.listName)/\(sectionName)"
   }
 
   private static func printListsStandard(_ summaries: [ListSummary]) {

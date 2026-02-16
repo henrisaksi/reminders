@@ -5,6 +5,18 @@ public actor RemindersStore {
   private let eventStore = EKEventStore()
   private let calendar: Calendar
 
+  private struct ReminderData: Sendable {
+    let id: String
+    let title: String
+    let notes: String?
+    let isCompleted: Bool
+    let completionDate: Date?
+    let priority: Int
+    let dueDateComponents: DateComponents?
+    let listID: String
+    let listName: String
+  }
+
   public init(calendar: Calendar = .current) {
     self.calendar = calendar
   }
@@ -104,17 +116,7 @@ public actor RemindersStore {
       reminder.dueDateComponents = calendarComponents(from: dueDate)
     }
     try eventStore.save(reminder, commit: true)
-    return ReminderItem(
-      id: reminder.calendarItemIdentifier,
-      title: reminder.title ?? "",
-      notes: reminder.notes,
-      isCompleted: reminder.isCompleted,
-      completionDate: reminder.completionDate,
-      priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
-      dueDate: date(from: reminder.dueDateComponents),
-      listID: reminder.calendar.calendarIdentifier,
-      listName: reminder.calendar.title
-    )
+    return item(from: reminder)
   }
 
   public func updateReminder(id: String, update: ReminderUpdate) async throws -> ReminderItem {
@@ -145,17 +147,7 @@ public actor RemindersStore {
 
     try eventStore.save(reminder, commit: true)
 
-    return ReminderItem(
-      id: reminder.calendarItemIdentifier,
-      title: reminder.title ?? "",
-      notes: reminder.notes,
-      isCompleted: reminder.isCompleted,
-      completionDate: reminder.completionDate,
-      priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
-      dueDate: date(from: reminder.dueDateComponents),
-      listID: reminder.calendar.calendarIdentifier,
-      listName: reminder.calendar.title
-    )
+    return item(from: reminder)
   }
 
   public func completeReminders(ids: [String]) async throws -> [ReminderItem] {
@@ -164,19 +156,7 @@ public actor RemindersStore {
       let reminder = try reminder(withID: id)
       reminder.isCompleted = true
       try eventStore.save(reminder, commit: true)
-      updated.append(
-        ReminderItem(
-          id: reminder.calendarItemIdentifier,
-          title: reminder.title ?? "",
-          notes: reminder.notes,
-          isCompleted: reminder.isCompleted,
-          completionDate: reminder.completionDate,
-          priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
-          dueDate: date(from: reminder.dueDateComponents),
-          listID: reminder.calendar.calendarIdentifier,
-          listName: reminder.calendar.title
-        )
-      )
+      updated.append(item(from: reminder))
     }
     return updated
   }
@@ -204,18 +184,6 @@ public actor RemindersStore {
   }
 
   private func fetchReminders(in calendars: [EKCalendar]) async -> [ReminderItem] {
-    struct ReminderData: Sendable {
-      let id: String
-      let title: String
-      let notes: String?
-      let isCompleted: Bool
-      let completionDate: Date?
-      let priority: Int
-      let dueDateComponents: DateComponents?
-      let listID: String
-      let listName: String
-    }
-
     let reminderData = await withCheckedContinuation { (continuation: CheckedContinuation<[ReminderData], Never>) in
       let predicate = eventStore.predicateForReminders(in: calendars)
       eventStore.fetchReminders(matching: predicate) { reminders in
@@ -236,18 +204,10 @@ public actor RemindersStore {
       }
     }
 
+    let sectionNames = SectionResolver().resolveSectionNames(for: reminderData.map { $0.id })
+
     return reminderData.map { data in
-      ReminderItem(
-        id: data.id,
-        title: data.title,
-        notes: data.notes,
-        isCompleted: data.isCompleted,
-        completionDate: data.completionDate,
-        priority: ReminderPriority(eventKitValue: data.priority),
-        dueDate: date(from: data.dueDateComponents),
-        listID: data.listID,
-        listName: data.listName
-      )
+      item(from: data, sectionName: sectionNames[data.id])
     }
   }
 
@@ -275,7 +235,7 @@ public actor RemindersStore {
     return calendar.date(from: components)
   }
 
-  private func item(from reminder: EKReminder) -> ReminderItem {
+  private func item(from reminder: EKReminder, sectionName: String? = nil) -> ReminderItem {
     ReminderItem(
       id: reminder.calendarItemIdentifier,
       title: reminder.title ?? "",
@@ -285,7 +245,23 @@ public actor RemindersStore {
       priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
       dueDate: date(from: reminder.dueDateComponents),
       listID: reminder.calendar.calendarIdentifier,
-      listName: reminder.calendar.title
+      listName: reminder.calendar.title,
+      sectionName: sectionName
+    )
+  }
+
+  private func item(from data: ReminderData, sectionName: String? = nil) -> ReminderItem {
+    ReminderItem(
+      id: data.id,
+      title: data.title,
+      notes: data.notes,
+      isCompleted: data.isCompleted,
+      completionDate: data.completionDate,
+      priority: ReminderPriority(eventKitValue: data.priority),
+      dueDate: date(from: data.dueDateComponents),
+      listID: data.listID,
+      listName: data.listName,
+      sectionName: sectionName
     )
   }
 }
