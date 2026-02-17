@@ -70,50 +70,9 @@ struct SectionResolver {
   private func loadSectionNames(from db: OpaquePointer, reminderIDs: [String]) -> [String: String] {
     let reminderIDSet = Set(reminderIDs)
 
-    let sectionColumns = columns(in: "ZREMCDSECTION", db: db)
-    guard !sectionColumns.isEmpty else { return [:] }
-
-    let sectionNameColumn = firstExistingColumn(
-      in: sectionColumns,
-      candidates: ["ZNAME", "ZNAME1", "ZTITLE", "ZTITLE1"]
-    )
-
-    guard let sectionNameColumn else { return [:] }
-
-    let sectionCKColumn = sectionColumns.contains("ZCKIDENTIFIER") ? "ZCKIDENTIFIER" : nil
-
-    var sectionsByPK: [Int64: String] = [:]
-    var sectionsByCK: [String: String] = [:]
-
-    var sectionQueryColumns = ["Z_PK", sectionNameColumn]
-    if let sectionCKColumn {
-      sectionQueryColumns.insert(sectionCKColumn, at: 1)
-    }
-
-    let sectionQuery = "SELECT \(sectionQueryColumns.joined(separator: ", ")) FROM ZREMCDSECTION"
-    if let statement = prepare(db: db, query: sectionQuery) {
-      defer { sqlite3_finalize(statement) }
-      while sqlite3_step(statement) == SQLITE_ROW {
-        let pk = sqlite3_column_int64(statement, 0)
-        let ckIndex = sectionCKColumn == nil ? nil : Int32(1)
-        let nameIndex: Int32 = sectionCKColumn == nil ? 1 : 2
-
-        let name = stringValue(statement, index: nameIndex)?.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-        guard let name, !name.isEmpty else { continue }
-        sectionsByPK[pk] = name
-
-        if let ckIndex, let ckValue = stringValue(statement, index: ckIndex) {
-          let ck = ckValue.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-          if !ck.isEmpty {
-            sectionsByCK[ck] = name
-          }
-        }
-      }
-    }
-
-
     let reminderColumns = columns(in: "ZREMCDREMINDER", db: db)
     guard !reminderColumns.isEmpty else { return [:] }
+    guard reminderColumns.contains("ZLIST") else { return [:] }
 
     let reminderIdentifierCandidates = [
       "ZDACALENDARITEMUNIQUEIDENTIFIER",
@@ -123,14 +82,7 @@ struct SectionResolver {
     let reminderIdentifierColumns = reminderIdentifierCandidates.filter { reminderColumns.contains($0) }
     guard !reminderIdentifierColumns.isEmpty else { return [:] }
 
-    let sectionRefColumn = firstExistingColumn(
-      in: reminderColumns,
-      candidates: ["ZSECTION", "ZSECTION1", "ZSECTIONID"]
-    )
-    var selectColumns = reminderIdentifierColumns
-    if let sectionRefColumn {
-      selectColumns.append(sectionRefColumn)
-    }
+    let selectColumns = reminderIdentifierColumns + ["ZLIST"]
     let reminderIDList = Array(reminderIDSet)
     let placeholders = Array(repeating: "?", count: reminderIDList.count).joined(separator: ", ")
     let whereClauses = reminderIdentifierColumns.map { "\($0) IN (\(placeholders))" }
@@ -146,38 +98,116 @@ struct SectionResolver {
       }
     }
 
-    var results: [String: String] = [:]
+    var reminderToMemberID: [String: String] = [:]
+    var reminderToListPK: [String: Int64] = [:]
+    var listPKs: Set<Int64> = []
+
     while sqlite3_step(reminderStatement) == SQLITE_ROW {
       var identifiers: [String] = []
-      for index in 0..<reminderIdentifierColumns.count {
+      var memberID: String?
+      for (index, column) in reminderIdentifierColumns.enumerated() {
         if let rawValue = stringValue(reminderStatement, index: Int32(index)) {
           let value = rawValue.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
           if !value.isEmpty {
             identifiers.append(value)
+            if column == "ZDACALENDARITEMUNIQUEIDENTIFIER" {
+              memberID = value
+            }
           }
         }
       }
 
       guard let matchedIdentifier = identifiers.first(where: { reminderIDSet.contains($0) }) else { continue }
-
-      var sectionName: String?
-      var sectionRef: SectionReference?
-      if sectionRefColumn != nil {
-        let sectionIndex = Int32(reminderIdentifierColumns.count)
-        sectionRef = sectionReference(from: reminderStatement, index: sectionIndex)
+      if memberID == nil {
+        memberID = matchedIdentifier
       }
 
-      if let sectionRef {
-        switch sectionRef {
-        case .pk(let pk):
-          sectionName = sectionsByPK[pk]
-        case .ck(let ck):
-          sectionName = sectionsByCK[ck]
+      let listIndex = Int32(reminderIdentifierColumns.count)
+      guard sqlite3_column_type(reminderStatement, listIndex) != SQLITE_NULL else { continue }
+      let listPK = sqlite3_column_int64(reminderStatement, listIndex)
+
+      guard let memberID else { continue }
+      reminderToMemberID[matchedIdentifier] = memberID
+      reminderToListPK[matchedIdentifier] = listPK
+      listPKs.insert(listPK)
+    }
+
+    guard !listPKs.isEmpty else { return [:] }
+
+    let memberIDs = Set(reminderToMemberID.values)
+    var memberToGroupID: [String: String] = [:]
+
+    let listPKList = Array(listPKs)
+    let listPlaceholders = Array(repeating: "?", count: listPKList.count).joined(separator: ", ")
+    let listQuery = "SELECT Z_PK, ZMEMBERSHIPSOFREMINDERSINSECTIONSASDATA FROM ZREMCDBASELIST WHERE Z_PK IN (\(listPlaceholders))"
+    if let listStatement = prepare(db: db, query: listQuery) {
+      defer { sqlite3_finalize(listStatement) }
+      var listBindIndex: Int32 = 1
+      for listPK in listPKList {
+        sqlite3_bind_int64(listStatement, listBindIndex, listPK)
+        listBindIndex += 1
+      }
+
+      while sqlite3_step(listStatement) == SQLITE_ROW {
+        let data: Data?
+        if let blob = blobValue(listStatement, index: 1) {
+          data = blob
+        } else if let text = stringValue(listStatement, index: 1) {
+          data = text.data(using: .utf8)
+        } else {
+          data = nil
+        }
+
+        guard let data,
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let memberships = json["memberships"] as? [[String: Any]]
+        else { continue }
+
+        for membership in memberships {
+          guard let memberID = membership["memberID"] as? String,
+                let groupID = membership["groupID"] as? String
+          else { continue }
+          if memberIDs.contains(memberID) {
+            memberToGroupID[memberID] = groupID
+          }
+        }
+      }
+    }
+
+    let sectionColumns = columns(in: "ZREMCDBASESECTION", db: db)
+    guard sectionColumns.contains("ZCKIDENTIFIER"), sectionColumns.contains("ZDISPLAYNAME") else { return [:] }
+
+    var sectionsByGroupID: [String: String] = [:]
+    var sectionQuery = "SELECT ZCKIDENTIFIER, ZDISPLAYNAME FROM ZREMCDBASESECTION"
+    if sectionColumns.contains("ZLIST") {
+      sectionQuery += " WHERE ZLIST IN (\(listPlaceholders))"
+    }
+
+    if let sectionStatement = prepare(db: db, query: sectionQuery) {
+      defer { sqlite3_finalize(sectionStatement) }
+      if sectionColumns.contains("ZLIST") {
+        var sectionBindIndex: Int32 = 1
+        for listPK in listPKList {
+          sqlite3_bind_int64(sectionStatement, sectionBindIndex, listPK)
+          sectionBindIndex += 1
         }
       }
 
-      if let sectionName {
-        results[matchedIdentifier] = sectionName
+      while sqlite3_step(sectionStatement) == SQLITE_ROW {
+        guard let rawGroupID = stringValue(sectionStatement, index: 0),
+              let rawName = stringValue(sectionStatement, index: 1)
+        else { continue }
+        let groupID = rawGroupID.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        let name = rawName.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        guard !groupID.isEmpty, !name.isEmpty else { continue }
+        sectionsByGroupID[groupID] = name
+      }
+    }
+
+    var results: [String: String] = [:]
+    for (reminderID, memberID) in reminderToMemberID {
+      if let groupID = memberToGroupID[memberID], let name = sectionsByGroupID[groupID] {
+        results[reminderID] = name
       }
     }
 

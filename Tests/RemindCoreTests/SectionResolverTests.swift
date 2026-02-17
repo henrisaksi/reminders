@@ -3,19 +3,25 @@ import SQLite3
 @testable import RemindCore
 
 final class SectionResolverTests: XCTestCase {
-  func testResolvesSectionNameFromPrimaryKey() throws {
+  func testResolvesSectionNameFromMembershipData() throws {
     let tempRoot = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     let libraryURL = tempRoot.appendingPathComponent("Library", isDirectory: true)
     let storesURL = libraryURL.appendingPathComponent("Reminders/Container/Stores", isDirectory: true)
     try FileManager.default.createDirectory(at: storesURL, withIntermediateDirectories: true)
 
     let dbURL = storesURL.appendingPathComponent("Data-1.sqlite")
+    let membershipsJSON = """
+    {"minimumSupportedVersion":20230430,"memberships":[{"memberID":"rem-1","groupID":"section-ck"}]}
+    """
+
     try createDatabase(at: dbURL, statements: [
-      "CREATE TABLE ZREMCDSECTION (Z_PK INTEGER PRIMARY KEY, ZNAME TEXT, ZCKIDENTIFIER TEXT);",
-      "CREATE TABLE ZREMCDREMINDER (Z_PK INTEGER PRIMARY KEY, ZDACALENDARITEMUNIQUEIDENTIFIER TEXT, ZSECTION INTEGER, ZLIST INTEGER);",
-      "INSERT INTO ZREMCDSECTION (Z_PK, ZNAME, ZCKIDENTIFIER) VALUES (5, 'Work', 'section-ck');",
-      "INSERT INTO ZREMCDREMINDER (Z_PK, ZDACALENDARITEMUNIQUEIDENTIFIER, ZSECTION, ZLIST) VALUES (10, 'rem-1', 5, NULL);",
-      "INSERT INTO ZREMCDREMINDER (Z_PK, ZDACALENDARITEMUNIQUEIDENTIFIER, ZSECTION, ZLIST) VALUES (11, 'rem-2', NULL, NULL);",
+      "CREATE TABLE ZREMCDBASELIST (Z_PK INTEGER PRIMARY KEY, ZMEMBERSHIPSOFREMINDERSINSECTIONSASDATA TEXT);",
+      "CREATE TABLE ZREMCDBASESECTION (Z_PK INTEGER PRIMARY KEY, ZCKIDENTIFIER TEXT, ZDISPLAYNAME TEXT, ZLIST INTEGER);",
+      "CREATE TABLE ZREMCDREMINDER (Z_PK INTEGER PRIMARY KEY, ZDACALENDARITEMUNIQUEIDENTIFIER TEXT, ZLIST INTEGER);",
+      "INSERT INTO ZREMCDBASELIST (Z_PK, ZMEMBERSHIPSOFREMINDERSINSECTIONSASDATA) VALUES (1, '\(membershipsJSON)');",
+      "INSERT INTO ZREMCDBASESECTION (Z_PK, ZCKIDENTIFIER, ZDISPLAYNAME, ZLIST) VALUES (5, 'section-ck', 'Work', 1);",
+      "INSERT INTO ZREMCDREMINDER (Z_PK, ZDACALENDARITEMUNIQUEIDENTIFIER, ZLIST) VALUES (10, 'rem-1', 1);",
+      "INSERT INTO ZREMCDREMINDER (Z_PK, ZDACALENDARITEMUNIQUEIDENTIFIER, ZLIST) VALUES (11, 'rem-2', 1);",
     ])
 
     let resolver = SectionResolver(fileManager: TestFileManager(libraryURL: libraryURL))
@@ -24,24 +30,30 @@ final class SectionResolverTests: XCTestCase {
     XCTAssertEqual(results, ["rem-1": "Work"])
   }
 
-  func testResolvesSectionNameFromCloudKitIdentifier() throws {
+  func testResolvesSectionNameWhenMatchingNonMemberIdentifier() throws {
     let tempRoot = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     let libraryURL = tempRoot.appendingPathComponent("Library", isDirectory: true)
     let storesURL = libraryURL.appendingPathComponent("Reminders/Container/Stores", isDirectory: true)
     try FileManager.default.createDirectory(at: storesURL, withIntermediateDirectories: true)
 
     let dbURL = storesURL.appendingPathComponent("Data-2.sqlite")
+    let membershipsJSON = """
+    {"minimumSupportedVersion":20230430,"memberships":[{"memberID":"rem-4","groupID":"section-home"}]}
+    """
+
     try createDatabase(at: dbURL, statements: [
-      "CREATE TABLE ZREMCDSECTION (Z_PK INTEGER PRIMARY KEY, ZNAME TEXT, ZCKIDENTIFIER TEXT);",
-      "CREATE TABLE ZREMCDREMINDER (Z_PK INTEGER PRIMARY KEY, ZDACALENDARITEMUNIQUEIDENTIFIER TEXT, ZSECTION TEXT);",
-      "INSERT INTO ZREMCDSECTION (Z_PK, ZNAME, ZCKIDENTIFIER) VALUES (3, 'Home', 'section-home');",
-      "INSERT INTO ZREMCDREMINDER (Z_PK, ZDACALENDARITEMUNIQUEIDENTIFIER, ZSECTION) VALUES (20, 'rem-3', 'section-home');",
+      "CREATE TABLE ZREMCDBASELIST (Z_PK INTEGER PRIMARY KEY, ZMEMBERSHIPSOFREMINDERSINSECTIONSASDATA TEXT);",
+      "CREATE TABLE ZREMCDBASESECTION (Z_PK INTEGER PRIMARY KEY, ZCKIDENTIFIER TEXT, ZDISPLAYNAME TEXT, ZLIST INTEGER);",
+      "CREATE TABLE ZREMCDREMINDER (Z_PK INTEGER PRIMARY KEY, ZDACALENDARITEMUNIQUEIDENTIFIER TEXT, ZCKIDENTIFIER TEXT, ZLIST INTEGER);",
+      "INSERT INTO ZREMCDBASELIST (Z_PK, ZMEMBERSHIPSOFREMINDERSINSECTIONSASDATA) VALUES (2, '\(membershipsJSON)');",
+      "INSERT INTO ZREMCDBASESECTION (Z_PK, ZCKIDENTIFIER, ZDISPLAYNAME, ZLIST) VALUES (7, 'section-home', 'Home', 2);",
+      "INSERT INTO ZREMCDREMINDER (Z_PK, ZDACALENDARITEMUNIQUEIDENTIFIER, ZCKIDENTIFIER, ZLIST) VALUES (20, 'rem-4', 'ck-rem-4', 2);",
     ])
 
     let resolver = SectionResolver(fileManager: TestFileManager(libraryURL: libraryURL))
-    let results = resolver.resolveSectionNames(for: ["rem-3"])
+    let results = resolver.resolveSectionNames(for: ["ck-rem-4"])
 
-    XCTAssertEqual(results, ["rem-3": "Home"])
+    XCTAssertEqual(results, ["ck-rem-4": "Home"])
   }
 }
 
