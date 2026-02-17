@@ -236,10 +236,6 @@ struct SectionResolver {
     return statement
   }
 
-  private func firstExistingColumn(in columns: Set<String>, candidates: [String]) -> String? {
-    candidates.first(where: { columns.contains($0) })
-  }
-
   private func stringValue(_ statement: OpaquePointer, index: Int32) -> String? {
     guard sqlite3_column_type(statement, index) != SQLITE_NULL,
           let cString = sqlite3_column_text(statement, index)
@@ -255,25 +251,4 @@ struct SectionResolver {
     return Data(bytes: bytes, count: length)
   }
 
-  private enum SectionReference {
-    case pk(Int64)
-    case ck(String)
-  }
-
-  private func sectionReference(from statement: OpaquePointer, index: Int32) -> SectionReference? {
-    switch sqlite3_column_type(statement, index) {
-    case SQLITE_INTEGER:
-      return .pk(sqlite3_column_int64(statement, index))
-    case SQLITE_TEXT:
-      if let rawValue = stringValue(statement, index: index) {
-        let value = rawValue.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-        if !value.isEmpty {
-          return .ck(value)
-        }
-      }
-      return nil
-    default:
-      return nil
-    }
-  }
 }
