@@ -3,6 +3,7 @@ import SQLite3
 
 struct SectionResolver {
   private let fileManager: FileManager
+  private let sqliteTransient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
 
   init(fileManager: FileManager = .default) {
     self.fileManager = fileManager
@@ -110,7 +111,6 @@ struct SectionResolver {
       }
     }
 
-    let listOrdering = loadSectionOrdering(from: db)
 
     let reminderColumns = columns(in: "ZREMCDREMINDER", db: db)
     guard !reminderColumns.isEmpty else { return [:] }
@@ -127,19 +127,24 @@ struct SectionResolver {
       in: reminderColumns,
       candidates: ["ZSECTION", "ZSECTION1", "ZSECTIONID"]
     )
-    let listRefColumn = reminderColumns.contains("ZLIST") ? "ZLIST" : nil
-
     var selectColumns = reminderIdentifierColumns
     if let sectionRefColumn {
       selectColumns.append(sectionRefColumn)
     }
-    if let listRefColumn {
-      selectColumns.append(listRefColumn)
-    }
-
-    let reminderQuery = "SELECT \(selectColumns.joined(separator: ", ")) FROM ZREMCDREMINDER"
+    let reminderIDList = Array(reminderIDSet)
+    let placeholders = Array(repeating: "?", count: reminderIDList.count).joined(separator: ", ")
+    let whereClauses = reminderIdentifierColumns.map { "\($0) IN (\(placeholders))" }
+    let reminderQuery = "SELECT \(selectColumns.joined(separator: ", ")) FROM ZREMCDREMINDER WHERE \(whereClauses.joined(separator: " OR "))"
     guard let reminderStatement = prepare(db: db, query: reminderQuery) else { return [:] }
     defer { sqlite3_finalize(reminderStatement) }
+
+    var bindIndex: Int32 = 1
+    for _ in reminderIdentifierColumns {
+      for reminderID in reminderIDList {
+        sqlite3_bind_text(reminderStatement, bindIndex, reminderID, -1, sqliteTransient)
+        bindIndex += 1
+      }
+    }
 
     var results: [String: String] = [:]
     while sqlite3_step(reminderStatement) == SQLITE_ROW {
@@ -162,22 +167,10 @@ struct SectionResolver {
         sectionRef = sectionReference(from: reminderStatement, index: sectionIndex)
       }
 
-      let listIndexOffset = reminderIdentifierColumns.count + (sectionRefColumn == nil ? 0 : 1)
-      var listPK: Int64?
-      if listRefColumn != nil {
-        listPK = sqlite3_column_int64(reminderStatement, Int32(listIndexOffset))
-      }
-
       if let sectionRef {
         switch sectionRef {
         case .pk(let pk):
           sectionName = sectionsByPK[pk]
-          if sectionName == nil, let listPK, let ordered = listOrdering[listPK], pk >= 0 {
-            let index = Int(pk)
-            if index < ordered.count {
-              sectionName = sectionsByCK[ordered[index]]
-            }
-          }
         case .ck(let ck):
           sectionName = sectionsByCK[ck]
         }
@@ -189,51 +182,6 @@ struct SectionResolver {
     }
 
     return results
-  }
-
-  private func loadSectionOrdering(from db: OpaquePointer) -> [Int64: [String]] {
-    let listColumns = columns(in: "ZREMCDLIST", db: db)
-    guard listColumns.contains("ZSECTIONIDSORDERINGASDATA") else { return [:] }
-
-    let query = "SELECT Z_PK, ZSECTIONIDSORDERINGASDATA FROM ZREMCDLIST"
-    guard let statement = prepare(db: db, query: query) else { return [:] }
-    defer { sqlite3_finalize(statement) }
-
-    var ordering: [Int64: [String]] = [:]
-    while sqlite3_step(statement) == SQLITE_ROW {
-      let pk = sqlite3_column_int64(statement, 0)
-      guard let data = blobValue(statement, index: 1) else { continue }
-      if let list = decodeStringArray(from: data), !list.isEmpty {
-        ordering[pk] = list
-      }
-    }
-    return ordering
-  }
-
-  private func decodeStringArray(from data: Data) -> [String]? {
-    if let object = try? NSKeyedUnarchiver.unarchivedObject(ofClasses: [NSArray.self, NSString.self], from: data) {
-      if let strings = object as? [String] {
-        let filtered = strings.filter { !$0.isEmpty }
-        return filtered.isEmpty ? nil : filtered
-      }
-      if let anyArray = object as? [Any] {
-        let strings = anyArray.compactMap { $0 as? String }.filter { !$0.isEmpty }
-        if !strings.isEmpty { return strings }
-      }
-    }
-
-    if let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) {
-      if let strings = plist as? [String] {
-        let filtered = strings.filter { !$0.isEmpty }
-        return filtered.isEmpty ? nil : filtered
-      }
-      if let anyArray = plist as? [Any] {
-        let strings = anyArray.compactMap { $0 as? String }.filter { !$0.isEmpty }
-        if !strings.isEmpty { return strings }
-      }
-    }
-
-    return nil
   }
 
   private func columns(in table: String, db: OpaquePointer) -> Set<String> {
