@@ -5,6 +5,8 @@ This skill provides instructions for using the `reminders` CLI tool to manage Ap
 ## Setup
 The `reminders` CLI requires macOS permissions. If you receive an authorization error, instruct the user to run `reminders authorize` and accept the prompt in macOS System Settings.
 
+**Note on Sections:** In order to read and display Reminders Sections (e.g., `[Groceries/Produce]`), the terminal emulator running the CLI must be granted **Full Disk Access** in macOS System Settings so it can read the local SQLite database.
+
 ## Commands
 
 ### Viewing Reminders
