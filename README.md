@@ -64,7 +64,7 @@ reminders add "Fix bug" --tag urgent --tag work
 reminders edit 1 --title "New title" --due 2026-01-04
 reminders edit 2 --tag done --remove-tag urgent
 reminders add "Check mailbox" --location "50 West St, New York"
-reminders add "Lock up" --location "Home" --leaving
+reminders add "Lock up" --location "Helsinki Airport" --leaving
 reminders complete 1 2 3
 reminders delete 4A83 --force
 reminders status                # permission status
@@ -82,6 +82,10 @@ Accepted by `--due` and filters:
 - `YYYY-MM-DD`
 - `YYYY-MM-DD HH:mm`
 - ISO 8601 (`2026-01-03T12:34:56Z`)
+
+## Known Limitations
+* **Tags**: Apple does not expose "Smart Tags" via the public EventKit API. Therefore, tags managed by this CLI are stored as `#hashtags` appended to the end of the reminder's title text. The CLI parses these text tags to allow for filtering and management in the terminal, but they will appear as plain text `#hashtags` in the official Reminders app.
+* **Locations**: The `--location` flag uses standard Apple Maps geocoding. It requires a real, searchable street address or city (e.g., `"123 Main St, New York"` or `"Helsinki"`). It cannot resolve personal Contacts, Address Book entries, or Apple Maps "Pinned" locations like the word `"Home"`.
 
 ## Permissions
 Run `reminders authorize` to trigger the system prompt. If access is denied, enable
