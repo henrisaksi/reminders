@@ -33,7 +33,7 @@ struct TagsTests {
   @Test("Extract tags handles only tags")
   func testExtractOnlyTags() {
     let parsed = CommandHelpers.parseTitleTags("#shopping #urgent")
-    #expect(parsed.baseTitle == "")
+    #expect(parsed.baseTitle.isEmpty)
     #expect(parsed.tags == ["shopping", "urgent"])
   }
 

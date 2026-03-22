@@ -110,8 +110,7 @@ enum EditCommand {
       let isCompleted: Bool? = completeFlag ? true : (incompleteFlag ? false : nil)
 
       if title == nil && listName == nil && notes == nil && dueUpdate == nil && priority == nil
-        && isCompleted == nil && !hasTagChange
-      {
+        && isCompleted == nil && !hasTagChange {
         throw RemindCoreError.operationFailed("No changes specified")
       }
 

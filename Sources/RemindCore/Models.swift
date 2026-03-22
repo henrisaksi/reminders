@@ -114,8 +114,8 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
 }
 
 public enum LocationProximity: String, Codable, CaseIterable, Sendable {
-  case arriving = "arriving"
-  case leaving = "leaving"
+  case arriving
+  case leaving
 }
 
 public struct LocationTrigger: Sendable {

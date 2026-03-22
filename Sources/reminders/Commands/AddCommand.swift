@@ -44,7 +44,11 @@ enum AddCommand {
             ),
           ],
           flags: [
-            .make(label: "leaving", names: [.long("leaving")], help: "Trigger when leaving location (default: arriving)"),
+            .make(
+              label: "leaving",
+              names: [.long("leaving")],
+              help: "Trigger when leaving location (default: arriving)"
+            ),
           ]
         )
       ),

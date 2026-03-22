@@ -56,8 +56,7 @@ enum CommandHelpers {
     var extracted: [String] = []
 
     while !title.isEmpty,
-      let range = title.range(of: pattern, options: .regularExpression)
-    {
+      let range = title.range(of: pattern, options: .regularExpression) {
       let match = String(title[range])
       let tag = match
         .trimmingCharacters(in: .whitespacesAndNewlines)
