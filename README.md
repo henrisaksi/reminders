@@ -16,8 +16,7 @@ brew install henrisaksi/tap/reminders
 
 ### From source
 ```bash
-pnpm install
-pnpm build
+make build
 # binary at ./bin/reminders
 ```
 
