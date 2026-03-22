@@ -63,6 +63,8 @@ reminders add --title "Call mom" --list Personal --due tomorrow
 reminders add "Fix bug" --tag urgent --tag work
 reminders edit 1 --title "New title" --due 2026-01-04
 reminders edit 2 --tag done --remove-tag urgent
+reminders add "Check mailbox" --location "50 West St, New York"
+reminders add "Lock up" --location "Home" --leaving
 reminders complete 1 2 3
 reminders delete 4A83 --force
 reminders status                # permission status

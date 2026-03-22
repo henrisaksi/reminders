@@ -28,6 +28,9 @@ Use `reminders add "<title>" [options]`.
   - `--due <date>` to set a due date (e.g., `tomorrow`, `YYYY-MM-DD`).
   - `--priority <level>` to set priority (`none`, `low`, `medium`, `high`).
   - `--tag <name>` to add a hashtag (e.g., `--tag urgent`). Repeatable.
+  - `--location "<address>"` to set a geofence trigger.
+  - `--leaving` to trigger when leaving the location instead of arriving.
+  - `--radius <meters>` to customize geofence size.
   - `--notes "<text>"` to add notes/description.
 
 ### Editing Reminders
