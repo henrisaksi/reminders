@@ -81,11 +81,9 @@ private func createDatabase(at url: URL, statements: [String]) throws {
   }
   defer { sqlite3_close(db) }
 
-  for statement in statements {
-    if sqlite3_exec(db, statement, nil, nil, nil) != SQLITE_OK {
-      let message = String(cString: sqlite3_errmsg(db))
-      throw DatabaseError.execFailed(message)
-    }
+  for statement in statements where sqlite3_exec(db, statement, nil, nil, nil) != SQLITE_OK {
+    let message = String(cString: sqlite3_errmsg(db))
+    throw DatabaseError.execFailed(message)
   }
 }
 
