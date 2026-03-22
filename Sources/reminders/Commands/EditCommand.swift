@@ -33,10 +33,10 @@ enum EditCommand {
         )
       ),
       usageExamples: [
-        "remindctl edit 1 --title \"New title\"",
-        "remindctl edit 4A83 --due tomorrow",
-        "remindctl edit 2 --priority high --notes \"Call before noon\"",
-        "remindctl edit 3 --clear-due",
+        "reminders edit 1 --title \"New title\"",
+        "reminders edit 4A83 --due tomorrow",
+        "reminders edit 2 --priority high --notes \"Call before noon\"",
+        "reminders edit 3 --clear-due",
       ]
     ) { values, runtime in
       guard let input = values.argument(0) else {

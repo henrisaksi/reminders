@@ -10,9 +10,9 @@ enum StatusCommand {
       discussion: "Reports the current Reminders permission state without prompting.",
       signature: CommandSignatures.withRuntimeFlags(CommandSignature()),
       usageExamples: [
-        "remindctl status",
-        "remindctl status --json",
-        "remindctl status --plain",
+        "reminders status",
+        "reminders status --json",
+        "reminders status --plain",
       ]
     ) { _, runtime in
       let status = RemindersStore.authorizationStatus()

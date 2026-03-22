@@ -1,4 +1,4 @@
-# remindctl
+# reminders
 
 Forget the app, not the task ✅
 
@@ -8,19 +8,19 @@ Fast CLI for Apple Reminders on macOS.
 
 ### Homebrew (Home Pro)
 ```bash
-brew install steipete/tap/remindctl
+brew install steipete/tap/reminders
 ```
 
 ### From source
 ```bash
 pnpm install
 pnpm build
-# binary at ./bin/remindctl
+# binary at ./bin/reminders
 ```
 
 ## Development
 ```bash
-make remindctl ARGS="status"   # clean build + run
+make reminders ARGS="status"   # clean build + run
 make check                     # lint + test + coverage gate
 ```
 
@@ -31,29 +31,29 @@ make check                     # lint + test + coverage gate
 
 ## Usage
 ```bash
-remindctl                      # show today (default)
-remindctl today                 # show today
-remindctl tomorrow              # show tomorrow
-remindctl week                  # show this week
-remindctl overdue               # overdue
-remindctl upcoming              # upcoming
-remindctl completed             # completed
-remindctl all                   # all reminders
-remindctl 2026-01-03            # specific date
+reminders                      # show today (default)
+reminders today                 # show today
+reminders tomorrow              # show tomorrow
+reminders week                  # show this week
+reminders overdue               # overdue
+reminders upcoming              # upcoming
+reminders completed             # completed
+reminders all                   # all reminders
+reminders 2026-01-03            # specific date
 
-remindctl list                  # lists
-remindctl list Work             # show list
-remindctl list Work --rename Office
-remindctl list Work --delete
-remindctl list Projects --create
+reminders list                  # lists
+reminders list Work             # show list
+reminders list Work --rename Office
+reminders list Work --delete
+reminders list Projects --create
 
-remindctl add "Buy milk"
-remindctl add --title "Call mom" --list Personal --due tomorrow
-remindctl edit 1 --title "New title" --due 2026-01-04
-remindctl complete 1 2 3
-remindctl delete 4A83 --force
-remindctl status                # permission status
-remindctl authorize             # request permissions
+reminders add "Buy milk"
+reminders add --title "Call mom" --list Personal --due tomorrow
+reminders edit 1 --title "New title" --due 2026-01-04
+reminders complete 1 2 3
+reminders delete 4A83 --force
+reminders status                # permission status
+reminders authorize             # request permissions
 ```
 
 ## Output formats
@@ -69,6 +69,6 @@ Accepted by `--due` and filters:
 - ISO 8601 (`2026-01-03T12:34:56Z`)
 
 ## Permissions
-Run `remindctl authorize` to trigger the system prompt. If access is denied, enable
-Terminal (or remindctl) in System Settings → Privacy & Security → Reminders.
+Run `reminders authorize` to trigger the system prompt. If access is denied, enable
+Terminal (or reminders) in System Settings → Privacy & Security → Reminders.
 If running over SSH, grant access on the Mac that runs the command.

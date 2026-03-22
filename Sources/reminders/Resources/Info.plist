@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
   <key>CFBundleIdentifier</key>
-  <string>com.steipete.remindctl</string>
+  <string>com.steipete.reminders</string>
   <key>CFBundleName</key>
-  <string>remindctl</string>
+  <string>reminders</string>
   <key>CFBundleExecutable</key>
-  <string>remindctl</string>
+  <string>reminders</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>

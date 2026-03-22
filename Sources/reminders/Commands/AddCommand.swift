@@ -28,9 +28,9 @@ enum AddCommand {
         )
       ),
       usageExamples: [
-        "remindctl add \"Buy milk\"",
-        "remindctl add --title \"Call mom\" --list Personal --due tomorrow",
-        "remindctl add \"Review docs\" --priority high",
+        "reminders add \"Buy milk\"",
+        "reminders add --title \"Call mom\" --list Personal --due tomorrow",
+        "reminders add \"Review docs\" --priority high",
       ]
     ) { values, runtime in
       let titleOption = values.option("title")

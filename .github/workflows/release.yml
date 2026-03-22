@@ -41,24 +41,24 @@ jobs:
         run: scripts/generate-version.sh
 
       - name: Build
-        run: swift build -c release --product remindctl
+        run: swift build -c release --product reminders
 
       - name: Codesign
-        run: codesign --force --sign - --identifier com.steipete.remindctl .build/release/remindctl
+        run: codesign --force --sign - --identifier com.steipete.reminders .build/release/reminders
 
       - name: Package artifact
         run: |
           mkdir -p dist
-          cp .build/release/remindctl dist/remindctl
+          cp .build/release/reminders dist/reminders
           (
             cd dist
-            zip -r remindctl-macos.zip remindctl
+            zip -r reminders-macos.zip reminders
           )
 
       - name: Publish release assets
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/remindctl-macos.zip
+          files: dist/reminders-macos.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

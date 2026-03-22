@@ -7,12 +7,12 @@
 1. Update changelog and version
    - Ensure `CHANGELOG.md` has `## 0.1.0 - YYYY-MM-DD` with final notes.
    - Update `version.env` to `0.1.0` (already set for the first release).
-   - Run `scripts/generate-version.sh` (refreshes `Sources/remindctl/Version.swift` + embedded Info.plist).
+   - Run `scripts/generate-version.sh` (refreshes `Sources/reminders/Version.swift` + embedded Info.plist).
 2. Ensure checks are green
    - `make check`
 3. Build, sign, and notarize (local)
    - Requires `APP_STORE_CONNECT_API_KEY_P8`, `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`.
-   - `scripts/sign-and-notarize.sh` (outputs `/tmp/remindctl-macos.zip` by default).
+   - `scripts/sign-and-notarize.sh` (outputs `/tmp/reminders-macos.zip` by default).
 4. Tag, push, and publish
    - `git tag -a v0.1.0 -m "v0.1.0"`
    - `git push origin v0.1.0`
@@ -28,10 +28,10 @@
      ```
    - Create GitHub release:
      ```sh
-     gh release create v0.1.0 /tmp/remindctl-macos.zip -t "v0.1.0" -F /tmp/release-notes.txt
+     gh release create v0.1.0 /tmp/reminders-macos.zip -t "v0.1.0" -F /tmp/release-notes.txt
      ```
 5. Homebrew tap
-   - Update `../homebrew-tap/Formula/remindctl.rb` to point at the GitHub release asset.
+   - Update `../homebrew-tap/Formula/reminders.rb` to point at the GitHub release asset.
 
 ## What happens in CI
 - Release signing + notarization are done locally via `scripts/sign-and-notarize.sh`.

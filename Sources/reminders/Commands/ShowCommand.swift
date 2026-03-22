@@ -28,11 +28,11 @@ enum ShowCommand {
         )
       ),
       usageExamples: [
-        "remindctl",
-        "remindctl today",
-        "remindctl show overdue",
-        "remindctl show 2026-01-04",
-        "remindctl show --list Work",
+        "reminders",
+        "reminders today",
+        "reminders show overdue",
+        "reminders show 2026-01-04",
+        "reminders show --list Work",
       ]
     ) { values, runtime in
       let listName = values.option("list")

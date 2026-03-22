@@ -4,17 +4,17 @@
 Run on a local GUI session (not SSH-only) so the Reminders permission prompt can appear.
 
 ## Test data
-- Use a dedicated list: `remindctl-manual-YYYYMMDD` (create if missing).
+- Use a dedicated list: `reminders-manual-YYYYMMDD` (create if missing).
 - Create 3 reminders with distinct states:
-  - `remindctl test A` (due today, priority high)
-  - `remindctl test B` (due tomorrow)
-  - `remindctl test C` (no due date)
+  - `reminders test A` (due today, priority high)
+  - `reminders test B` (due tomorrow)
+  - `reminders test C` (no due date)
 
 ## Checklist
-- authorize: `remindctl authorize`
-- status: `remindctl status`
-- list lists: `remindctl list`
-- list list contents: `remindctl list "remindctl-manual-YYYYMMDD"`
+- authorize: `reminders authorize`
+- status: `reminders status`
+- list lists: `reminders list`
+- list list contents: `reminders list "reminders-manual-YYYYMMDD"`
 - add reminders (3 variants)
 - show filters: `today`, `tomorrow`, `week`, `overdue`, `upcoming`, `completed`, `all`
 - edit: update title/notes/priority/due date

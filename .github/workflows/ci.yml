@@ -23,4 +23,4 @@ jobs:
       - name: Swift test + coverage
         run: scripts/check-coverage.sh
       - name: Swift build
-        run: swift build -c release --product remindctl
+        run: swift build -c release --product reminders

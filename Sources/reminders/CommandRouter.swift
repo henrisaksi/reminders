@@ -3,7 +3,7 @@ import Foundation
 import RemindCore
 
 struct CommandRouter {
-  let rootName = "remindctl"
+  let rootName = "reminders"
   let version: String
   let specs: [CommandSpec]
   let program: Program
@@ -147,9 +147,9 @@ struct CommandRouter {
   }
 
   private static func resolveVersion() -> String {
-    if let envVersion = ProcessInfo.processInfo.environment["REMINDCTL_VERSION"], !envVersion.isEmpty {
+    if let envVersion = ProcessInfo.processInfo.environment["REMINDERS_VERSION"], !envVersion.isEmpty {
       return envVersion
     }
-    return RemindctlVersion.current
+    return RemindersVersion.current
   }
 }

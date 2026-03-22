@@ -16,7 +16,7 @@ public enum RemindCoreError: LocalizedError, Sendable, Equatable {
     case .accessDenied:
       return [
         "Reminders access denied.",
-        "Run `remindctl authorize` to trigger the prompt, then allow Terminal (or remindctl)",
+        "Run `reminders authorize` to trigger the prompt, then allow Terminal (or reminders)",
         "in System Settings > Privacy & Security > Reminders.",
         "If running over SSH, grant access on the Mac that runs the command.",
       ].joined(separator: " ")

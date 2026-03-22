@@ -29,11 +29,11 @@ enum ListCommand {
         )
       ),
       usageExamples: [
-        "remindctl list",
-        "remindctl list Work",
-        "remindctl list Work --rename Office",
-        "remindctl list Work --delete",
-        "remindctl list Projects --create",
+        "reminders list",
+        "reminders list Work",
+        "reminders list Work --rename Office",
+        "reminders list Work --delete",
+        "reminders list Projects --create",
       ]
     ) { values, runtime in
       let name = values.argument(0)

@@ -1,6 +1,6 @@
 import Testing
 
-@testable import remindctl
+@testable import reminders
 
 @MainActor
 struct HelpPrinterTests {
@@ -13,7 +13,7 @@ struct HelpPrinterTests {
       StatusCommand.spec,
       AuthorizeCommand.spec,
     ]
-    let lines = HelpPrinter.renderRoot(version: "0.0.0", rootName: "remindctl", commands: specs)
+    let lines = HelpPrinter.renderRoot(version: "0.0.0", rootName: "reminders", commands: specs)
     let joined = lines.joined(separator: "\n")
     #expect(joined.contains("show"))
     #expect(joined.contains("list"))

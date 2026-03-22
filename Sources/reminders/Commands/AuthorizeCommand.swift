@@ -10,9 +10,9 @@ enum AuthorizeCommand {
       discussion: "Triggers the Reminders permission prompt when available.",
       signature: CommandSignatures.withRuntimeFlags(CommandSignature()),
       usageExamples: [
-        "remindctl authorize",
-        "remindctl authorize --json",
-        "remindctl authorize --quiet",
+        "reminders authorize",
+        "reminders authorize --json",
+        "reminders authorize --quiet",
       ]
     ) { _, runtime in
       let store = RemindersStore()

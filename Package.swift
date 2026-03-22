@@ -2,11 +2,11 @@
 import PackageDescription
 
 let package = Package(
-  name: "remindctl",
+  name: "reminders",
   platforms: [.macOS(.v14)],
   products: [
     .library(name: "RemindCore", targets: ["RemindCore"]),
-    .executable(name: "remindctl", targets: ["remindctl"]),
+    .executable(name: "reminders", targets: ["reminders"]),
   ],
   dependencies: [
     .package(url: "https://github.com/steipete/Commander.git", from: "0.2.0"),
@@ -20,7 +20,7 @@ let package = Package(
       ]
     ),
     .executableTarget(
-      name: "remindctl",
+      name: "reminders",
       dependencies: [
         "RemindCore",
         .product(name: "Commander", package: "Commander"),
@@ -33,7 +33,7 @@ let package = Package(
           "-Xlinker", "-sectcreate",
           "-Xlinker", "__TEXT",
           "-Xlinker", "__info_plist",
-          "-Xlinker", "Sources/remindctl/Resources/Info.plist",
+          "-Xlinker", "Sources/reminders/Resources/Info.plist",
         ]),
       ]
     ),
@@ -44,9 +44,9 @@ let package = Package(
       ]
     ),
     .testTarget(
-      name: "remindctlTests",
+      name: "remindersTests",
       dependencies: [
-        "remindctl",
+        "reminders",
         "RemindCore",
       ]
     ),

@@ -19,9 +19,9 @@ enum CompleteCommand {
         )
       ),
       usageExamples: [
-        "remindctl complete 1",
-        "remindctl complete 1 2 3",
-        "remindctl complete 4A83",
+        "reminders complete 1",
+        "reminders complete 1 2 3",
+        "reminders complete 4A83",
       ]
     ) { values, runtime in
       let inputs = values.positional

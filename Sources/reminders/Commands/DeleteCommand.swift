@@ -20,9 +20,9 @@ enum DeleteCommand {
         )
       ),
       usageExamples: [
-        "remindctl delete 1",
-        "remindctl delete 4A83",
-        "remindctl delete 1 2 3 --force",
+        "reminders delete 1",
+        "reminders delete 4A83",
+        "reminders delete 1 2 3 --force",
       ]
     ) { values, runtime in
       let inputs = values.positional
