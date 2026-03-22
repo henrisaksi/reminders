@@ -8,7 +8,7 @@ Fast CLI for Apple Reminders on macOS.
 
 ### Homebrew (Home Pro)
 ```bash
-brew install steipete/tap/reminders
+brew install henrisaksi/tap/reminders
 ```
 
 ### From source
